@@ -26,6 +26,9 @@ public class CourseInfo {
 	
 	@Column(name = "credit")
 	private Integer credit;
+	
+	@Column(name = "select_limit")
+	private Integer selectLimit;
 
 	@Column(name = "selected_person")
 	private String selectedPerson = "";
@@ -89,6 +92,14 @@ public class CourseInfo {
 		this.selectedPerson = selectedPerson;
 	}
 	
+	public Integer getSelectLimit() {
+		return selectLimit;
+	}
+
+	public void setSelectLimit(Integer selectLimit) {
+		this.selectLimit = selectLimit;
+	}
+
 	public void setCourseInfo(CourseInfo courseInfo) {
 		this.courseId = courseInfo.getCourseId();
 		this.courseName = courseInfo.getCourseName();
@@ -97,6 +108,7 @@ public class CourseInfo {
 		this.endTime = courseInfo.getEndTime();
 		this.credit = courseInfo.getCredit();
 		this.selectedPerson = courseInfo.getSelectedPerson();
+		this.selectLimit = courseInfo.getSelectLimit();
 	}
 	
 	//Constructor
@@ -104,23 +116,25 @@ public class CourseInfo {
 	}
 	
 	public CourseInfo(String courseId, String courseName, String lessonDay, String startTime, 
-			String endTime, Integer credit) {
+			String endTime, Integer credit , Integer selectLimit) {
 		this.courseId = courseId;
 		this.courseName = courseName;
 		this.lessonDay = lessonDay;
 		this.startTime = startTime;
 		this.endTime = endTime;
 		this.credit = credit;
+		this.selectLimit = selectLimit;
 	}
 	
 	public CourseInfo(String courseId, String courseName, String lessonDay, String startTime, 
-			String endTime, Integer credit , String selectedPerson) {
+			String endTime, Integer credit , Integer selectLimit , String selectedPerson) {
 		this.courseId = courseId;
 		this.courseName = courseName;
 		this.lessonDay = lessonDay;
 		this.startTime = startTime;
 		this.endTime = endTime;
 		this.credit = credit;
+		this.selectLimit = selectLimit;
 		this.selectedPerson = selectedPerson;
 	}
 	

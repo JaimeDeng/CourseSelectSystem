@@ -9,9 +9,20 @@ public class CourseInfoReq extends CourseInfo {
 	
 	private List<CourseInfo> courseInfoList = new ArrayList<CourseInfo>();
 	
+	private List<String> selectCourseList = new ArrayList<String>();
+	
 	private String studentId;
 
 	//Getter & Setter
+	
+	public List<String> getSelectCourseList() {
+		return selectCourseList;
+	}
+
+	public void setSelectCourseList(List<String> selectCourseList) {
+		this.selectCourseList = selectCourseList;
+	}
+	
 	public List<CourseInfo> getCourseInfoList() {
 		return courseInfoList;
 	}

@@ -65,17 +65,19 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 				String lessonDayReqList = element.getLessonDay();
 				String startTimeReqList = element.getStartTime();
 				String endTimeReqList = element.getEndTime();
+				Integer selectLimitReqList = element.getSelectLimit();
 				
-				if(!StringUtils.hasText(courseIdReqList) || courseIdReqList.length() < 3) {
-					courseInfoResp.message = "課程代碼" + courseIdReqList + "不得為空且須大於3個字元";
+				String idPattern = "[a-zA-Z0-9]{4,10}";
+				if(!courseIdReqList.matches(idPattern)) {
+					courseInfoResp.message = "課程代碼" + courseIdReqList + "必須為英數字4~10個字元";
 					return courseInfoResp;
 				}
 				if(!StringUtils.hasText(courseNameReqList)) {
 					courseInfoResp.message = "課程名稱"+ courseNameReqList +"格式錯誤";
 					return courseInfoResp;
 				}
-				if(creditReqList < 1) {
-					courseInfoResp.message = "課程代碼" + courseIdReqList + "的學分不可設定低於1";
+				if(creditReqList == null || creditReqList < 1 || creditReqList > 3) {
+					courseInfoResp.message = "請設定課程代碼" + courseIdReqList + "的學分且不可設定低於1或大於3";
 					return courseInfoResp;
 				}
 				if(!StringUtils.hasText(lessonDayReqList)) {
@@ -93,6 +95,10 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 							+ "請輸入24小時制的時間格式";
 					return courseInfoResp;
 				}
+				if(selectLimitReqList == null || selectLimitReqList < 3) {
+					courseInfoResp.message = "請輸入選修人數且上限不可小於3人";
+					return courseInfoResp;
+				}
 				//選課人員名單不可設定 , 預設為空白
 			}
 			courseInfoDao.saveAll(courseInfoListReq);
@@ -107,16 +113,19 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 			String startTimeReq = courseInfoReq.getStartTime();
 			String endTimeReq = courseInfoReq.getEndTime();
 			String selectedPersonReq = courseInfoReq.getSelectedPerson();
-			if(!StringUtils.hasText(courseIdReq)) {
-				courseInfoResp.message = "課程代碼不得為空且須大於3個字元";
+			Integer selectLimitReq = courseInfoReq.getSelectLimit();
+			
+			String idPattern = "[a-zA-Z0-9]{4,10}";
+			if(!courseIdReq.matches(idPattern)) {
+				courseInfoResp.message = "課程代碼必須為英數字4~10個字元";
 				return courseInfoResp;
 			}
 			if(!StringUtils.hasText(courseNameReq)) {
 				courseInfoResp.message = "課程名稱格式錯誤";
 				return courseInfoResp;
 			}
-			if(creditReq < 1) {
-				courseInfoResp.message = "學分不可設定低於1";
+			if(creditReq == null || creditReq < 1 || creditReq > 3) {
+				courseInfoResp.message = "請設定學分且不可設定低於1或大於3";
 				return courseInfoResp;
 			}
 			if(!StringUtils.hasText(lessonDayReq)) {
@@ -134,10 +143,14 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 						+ "請輸入24小時制的時間格式";
 				return courseInfoResp;
 			}
+			if(selectLimitReq == null || selectLimitReq < 3) {
+				courseInfoResp.message = "請輸入選修人數且上限不可小於3人";
+				return courseInfoResp;
+			}
 			//選課人員名單不可設定 , 預設為空白
 
 			CourseInfo courseInfo = new CourseInfo(courseIdReq , courseNameReq , lessonDayReq , startTimeReq , 
-					endTimeReq , creditReq);
+					endTimeReq , creditReq , selectLimitReq);
 			courseInfoDao.save(courseInfo);
 			courseInfoResp.message = "課程資訊儲存成功";
 		}
@@ -195,13 +208,14 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 			String lessonDayReq = courseInfoReq.getLessonDay();
 			String startTimeReq = courseInfoReq.getStartTime();
 			String endTimeReq = courseInfoReq.getEndTime();
+			Integer selectLimitReq = courseInfoReq.getSelectLimit();
 			
 			if(!StringUtils.hasText(courseNameReq)) {
 				courseInfoResp.message = "課程名稱格式錯誤";
 				return courseInfoResp;
 			}
-			if(creditReq < 1) {
-				courseInfoResp.message = "學分不可設定低於1";
+			if(creditReq == null || creditReq < 1 || creditReq > 3) {
+				courseInfoResp.message = "請設定學分且不可設定低於1或大於3";
 				return courseInfoResp;
 			}
 			if(!StringUtils.hasText(lessonDayReq)) {
@@ -216,17 +230,21 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 				courseInfoResp.message = "下課時間不可為空";
 				return courseInfoResp;
 			}
+			if(selectLimitReq == null || selectLimitReq < 3) {
+				courseInfoResp.message = "請輸入選修人數且上限不可小於3人";
+				return courseInfoResp;
+			}
 			//如果該課程有人選修 , 保留選修人員資訊
 			if(!courseInfo.getSelectedPerson().isBlank()) {
 				CourseInfo newCourseInfo = new CourseInfo(courseIdReq , courseNameReq , lessonDayReq , startTimeReq , 
-						endTimeReq , creditReq , courseInfo.getSelectedPerson());
+						endTimeReq , creditReq , selectLimitReq , courseInfo.getSelectedPerson());
 				courseInfoDao.save(newCourseInfo);
 				courseInfoResp.message = "課程資訊修改成功";
 				return courseInfoResp;
 			}
 			
 			CourseInfo newCourseInfo = new CourseInfo(courseIdReq , courseNameReq , lessonDayReq , startTimeReq , 
-					endTimeReq , creditReq);
+					endTimeReq , creditReq , selectLimitReq);
 			courseInfoDao.save(newCourseInfo);
 			courseInfoResp.message = "課程資訊修改成功";
 		}
@@ -259,142 +277,386 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 	@Override
 	public CourseInfoResp selectCourse(CourseInfoReq courseInfoReq) {
 		StudentInfo studentInfo = studentInfoDao.findStudentInfoByStudentId(courseInfoReq.getStudentId());
-		CourseInfo courseInfo = courseInfoDao.findCourseInfoByCourseId(courseInfoReq.getCourseId());
 		String selectedCourse = studentInfo.getSelectedCourse();
 		
-		if(courseInfo == null) {
-			courseInfoResp.message = "該課程代碼不存在";
-			return courseInfoResp;
-		}
-		
-		//欲選課程選修人數上限判斷
-		String courseSeletedPerson = courseInfo.getSelectedPerson();
-		if(!courseSeletedPerson.isBlank()) {
-			String[] courseSeletedPersonArray = courseSeletedPerson.split(",");
-			List<String> courseSeletedPersonList = new ArrayList<>(Arrays.asList(courseSeletedPersonArray));
-			if(courseSeletedPersonList.size() >= 3) {
-				courseInfoResp.message = "該課程的選修人數已達上限 , 無法再加選";
-				return courseInfoResp;
-			}
-		}
-		
-		//學分上限判斷
-		if(studentInfo.getAcquiredCredit() >= 10) {
-			courseInfoResp.message = "你的學分已經滿10分了 , 無法再加選";
-			return courseInfoResp;
-		}
-		
-		//學生已選課程判斷
-		if(!selectedCourse.isBlank()) {
-			//學生有已選課程
-			String[] selectedCourseArray = selectedCourse.split(",");
-			List<String> selectedCourseList = new ArrayList<>(Arrays.asList(selectedCourseArray));
+		//---------------------------------------多重加選----------------------------------------
+		List<String> selectCourseListReq = courseInfoReq.getSelectCourseList();
+		if(selectCourseListReq.size() != 0) {
 			
-			//重複加選判斷
-			if(selectedCourseList.contains(courseInfoReq.getCourseId())) {
-				courseInfoResp.message = "你已經加選該課程了 , 無法再加選";
+			if(selectCourseListReq.size() > 3) {
+				courseInfoResp.message = "選課上限為三門課程,不可超過選課上限";
 				return courseInfoResp;
 			}
 			
-			//學生選修上限判斷
-			if(selectedCourseList.size() >= 3) {
-				courseInfoResp.message = "你的選修課程數已達上限 , 無法再加選";
+			//學分上限判斷
+			if(studentInfo.getAcquiredCredit() >= 10) {
+				courseInfoResp.message = "你的學分已經滿10分了 , 無法再加選";
 				return courseInfoResp;
 			}
 			
-			//課程同名判斷
-			for(String element : selectedCourseList) {
-				//學生已選課程的Info (new新的Req使用,否則會蓋掉原本輸入的ReqBody)
-				CourseInfoReq selectedCourseInfoReq = new CourseInfoReq();
-				selectedCourseInfoReq.setCourseId(element);
-				CourseInfo selectedCourseInfo = getCourseInfoByCourseId(selectedCourseInfoReq);
-				if(courseInfo.getCourseName().equals(selectedCourseInfo.getCourseName())) {
-					courseInfoResp.message = "你的已選課程中已有 " + courseInfo.getCourseName() + " , 不可再"
-							+ "加選相同名稱的課程" ;
+			//總學分上限判斷(先加先算)
+			int count = 1;
+			int acquiredCredit = studentInfo.getAcquiredCredit();
+			for(String element : selectCourseListReq) {
+				CourseInfo listCourseInfo = courseInfoDao.findCourseInfoByCourseId(element);
+				acquiredCredit += listCourseInfo.getCredit();
+				 if(acquiredCredit >= 10 && count < selectCourseListReq.size()) {
+					 courseInfoResp.message = "你加選的課程已超過你的學分上限";
+					return courseInfoResp;
+				 }
+				 count++;
+			}
+			
+			//選課List衝堂判斷 & 撞名判斷
+			for(int i =0 ; i < selectCourseListReq.size() ; i++) {
+				for(int j =0 ; j < selectCourseListReq.size() ; j++) {
+					if(i != j) {
+						CourseInfo courseInfoA = courseInfoDao.findCourseInfoByCourseId(selectCourseListReq.get(i));
+						CourseInfo courseInfoB = courseInfoDao.findCourseInfoByCourseId(selectCourseListReq.get(j));
+						
+						//撞名判斷
+						if(courseInfoA.getCourseName().equals(courseInfoB.getCourseName())) {
+							courseInfoResp.message = "你選的課程 " + courseInfoA.getCourseId() + " 與課程 " +
+									courseInfoB.getCourseId() + " 名稱相同 , 不可加選";
+							return courseInfoResp;
+						}
+						
+						//衝堂判斷
+						//課程A的上下課時間轉為分鐘數
+						String courseInfoAStartTimeStr = courseInfoA.getStartTime();
+						LocalTime courseInfoAStartTime = LocalTime.parse(courseInfoAStartTimeStr);
+						int courseInfoAStartTimeMinutes = courseInfoAStartTime.getHour() * 60 + 
+								courseInfoAStartTime.getMinute();
+						
+						String courseInfoAEndTimeStr = courseInfoA.getEndTime();
+						LocalTime courseInfoAEndTime = LocalTime.parse(courseInfoAEndTimeStr);
+						int courseInfoAEndTimeMinutes = courseInfoAEndTime.getHour() * 60 + 
+								courseInfoAEndTime.getMinute();
+						
+						//課程B的上下課時間轉為分鐘數
+						String courseInfoBStartTimeStr = courseInfoB.getStartTime();
+						LocalTime courseInfoBStartTime = LocalTime.parse(courseInfoBStartTimeStr);
+						int courseInfoBStartTimeMinutes = courseInfoBStartTime.getHour() * 60 + 
+								courseInfoBStartTime.getMinute();
+						
+						String courseInfoBEndTimeStr = courseInfoB.getStartTime();
+						LocalTime courseInfoBEndTime = LocalTime.parse(courseInfoBEndTimeStr);
+						int courseInfoBEndTimeMinutes = courseInfoBEndTime.getHour() * 60 + 
+								courseInfoBEndTime.getMinute();
+						
+						//同一天才判斷
+						if(courseInfoA.getLessonDay().equals(courseInfoB.getLessonDay())){
+							
+							if(courseInfoBStartTimeMinutes >= courseInfoAStartTimeMinutes
+								&& courseInfoBStartTimeMinutes <= courseInfoAEndTimeMinutes
+								||	courseInfoBEndTimeMinutes >= courseInfoAStartTimeMinutes
+								&& courseInfoBEndTimeMinutes <= courseInfoAEndTimeMinutes) {
+								courseInfoResp.message = "你選的課程 " + courseInfoA.getCourseName() + " 與課程 " +
+										courseInfoB.getCourseName() + " 時間相衝 , 不可加選";
+								return courseInfoResp;
+							}
+						}
+					}
+				}
+			}
+			
+			
+			for(String selectCourse : selectCourseListReq) {
+				CourseInfo courseInfo = courseInfoDao.findCourseInfoByCourseId(selectCourse);
+			
+				if(courseInfo == null) {
+					courseInfoResp.message = "課程代碼 " + courseInfo.getCourseId() + " 不存在";
 					return courseInfoResp;
 				}
 				
-				//衝堂判斷
-				//已選課程的上下課時間轉為分鐘數
-				String selectedCourseStartTimeStr = selectedCourseInfo.getStartTime();
-				LocalTime selectedCourseStartTime = LocalTime.parse(selectedCourseStartTimeStr);
-				int selectedCourseStartTimeMinutes = selectedCourseStartTime.getHour() * 60 + 
-						selectedCourseStartTime.getMinute();
+				//欲選課程選修人數上限判斷
+				String courseSeletedPerson = courseInfo.getSelectedPerson();
+				if(!courseSeletedPerson.isBlank()) {
+					String[] courseSeletedPersonArray = courseSeletedPerson.split(",");
+					List<String> courseSeletedPersonList = new ArrayList<>(Arrays.asList(courseSeletedPersonArray));
+					if(courseSeletedPersonList.size() >= courseInfo.getSelectLimit()) {
+						courseInfoResp.message = "課程 " + courseInfo.getCourseId() + " 的選修人數已達上限 , 無法再加選";
+						return courseInfoResp;
+					}
+				}
 				
-				String selectedCourseEndTimeStr = selectedCourseInfo.getEndTime();
-				LocalTime selectedCourseEndTime = LocalTime.parse(selectedCourseEndTimeStr);
-				int selectedCourseEndTimeMinutes = selectedCourseEndTime.getHour() * 60 + 
-						selectedCourseEndTime.getMinute();
-				
-				//欲選課程的上下課時間轉為分鐘數
-				String selectCourseStartTimeStr = courseInfo.getStartTime();
-				LocalTime selectCourseStartTime = LocalTime.parse(selectCourseStartTimeStr);
-				int selectCourseStartTimeMinutes = selectCourseStartTime.getHour() * 60 + 
-						selectCourseStartTime.getMinute();
-				
-				String selectCourseEndTimeStr = courseInfo.getStartTime();
-				LocalTime selectCourseEndTime = LocalTime.parse(selectCourseEndTimeStr);
-				int selectCourseEndTimeMinutes = selectCourseEndTime.getHour() * 60 + 
-						selectCourseEndTime.getMinute();
-				
-				//同一天才判斷
-				if(courseInfo.getLessonDay().equals(selectedCourseInfo.getLessonDay())){
+				//學生已選課程判斷
+				if(!selectedCourse.isBlank()) {
+					//學生有已選課程
+					String[] selectedCourseArray = selectedCourse.split(",");
+					List<String> selectedCourseList = new ArrayList<>(Arrays.asList(selectedCourseArray));
 					
-					if(selectCourseStartTimeMinutes >= selectedCourseStartTimeMinutes
-						&& selectCourseStartTimeMinutes <= selectedCourseEndTimeMinutes
-						||	selectCourseEndTimeMinutes >= selectedCourseStartTimeMinutes
-						&& selectCourseEndTimeMinutes <= selectedCourseEndTimeMinutes) {
-						courseInfoResp.message = "你的已選課程 " + selectedCourseInfo.getCourseName() + " 與欲選課程 " +
-								courseInfo.getCourseName() + " 時間相衝 , 不可加選";
+					//重複加選判斷
+					if(selectedCourseList.contains(courseInfo.getCourseId())) {
+						courseInfoResp.message = "你已經加選課程 " + courseInfo.getCourseId() + " 了 , 無法再加選";
 						return courseInfoResp;
 					}
 					
+					//學生選修上限判斷
+					if(selectedCourseList.size() >= 3) {
+						courseInfoResp.message = "你的選修課程數已達上限 , 無法再加選";
+						return courseInfoResp;
+					}
+					
+					//已修課程數加上修課列表超出上限判斷
+					if( (selectedCourseList.size()+selectCourseListReq.size()) > 3 ) {
+						courseInfoResp.message = "你已修了 " + selectedCourseList.size() + " 門課 , "
+								+ "不可加選超過選修課程數上限3門";
+						return courseInfoResp;
+					}
+					
+					//課程同名判斷
+					for(String element : selectedCourseList) {
+						//學生已選課程的Info (new新的Req使用,否則會蓋掉原本輸入的ReqBody)
+						CourseInfoReq selectedCourseInfoReq = new CourseInfoReq();
+						selectedCourseInfoReq.setCourseId(element);
+						CourseInfo selectedCourseInfo = getCourseInfoByCourseId(selectedCourseInfoReq);
+						if(courseInfo.getCourseName().equals(selectedCourseInfo.getCourseName())) {
+							courseInfoResp.message = "你的已選課程中已有 " + courseInfo.getCourseName() + " , 不可再"
+									+ "加選相同名稱的課程" ;
+							return courseInfoResp;
+						}
+						
+						//衝堂判斷
+						//已選課程的上下課時間轉為分鐘數
+						String selectedCourseStartTimeStr = selectedCourseInfo.getStartTime();
+						LocalTime selectedCourseStartTime = LocalTime.parse(selectedCourseStartTimeStr);
+						int selectedCourseStartTimeMinutes = selectedCourseStartTime.getHour() * 60 + 
+								selectedCourseStartTime.getMinute();
+						
+						String selectedCourseEndTimeStr = selectedCourseInfo.getEndTime();
+						LocalTime selectedCourseEndTime = LocalTime.parse(selectedCourseEndTimeStr);
+						int selectedCourseEndTimeMinutes = selectedCourseEndTime.getHour() * 60 + 
+								selectedCourseEndTime.getMinute();
+						
+						//欲選課程的上下課時間轉為分鐘數
+						String selectCourseStartTimeStr = courseInfo.getStartTime();
+						LocalTime selectCourseStartTime = LocalTime.parse(selectCourseStartTimeStr);
+						int selectCourseStartTimeMinutes = selectCourseStartTime.getHour() * 60 + 
+								selectCourseStartTime.getMinute();
+						
+						String selectCourseEndTimeStr = courseInfo.getStartTime();
+						LocalTime selectCourseEndTime = LocalTime.parse(selectCourseEndTimeStr);
+						int selectCourseEndTimeMinutes = selectCourseEndTime.getHour() * 60 + 
+								selectCourseEndTime.getMinute();
+						
+						//同一天才判斷
+						if(courseInfo.getLessonDay().equals(selectedCourseInfo.getLessonDay())){
+							
+							if(selectCourseStartTimeMinutes >= selectedCourseStartTimeMinutes
+								&& selectCourseStartTimeMinutes <= selectedCourseEndTimeMinutes
+								||	selectCourseEndTimeMinutes >= selectedCourseStartTimeMinutes
+								&& selectCourseEndTimeMinutes <= selectedCourseEndTimeMinutes) {
+								courseInfoResp.message = "你的已選課程 " + selectedCourseInfo.getCourseName() + " 與欲選課程 " +
+										courseInfo.getCourseName() + " 時間相衝 , 不可加選";
+								return courseInfoResp;
+							}					
+						}
+					}
+				}
+			}
+
+			//選課資訊儲存區塊
+			if(!selectedCourse.isBlank()) {
+				//學生有已選課程
+				String[] selectedCourseArray = selectedCourse.split(",");
+				List<String> selectedCourseList = new ArrayList<>(Arrays.asList(selectedCourseArray));
+			
+				//加入學生已選課程
+				int newCredit = 0;
+				for(String element : selectCourseListReq) {
+					CourseInfo listCourseInfo = courseInfoDao.findCourseInfoByCourseId(element);
+					newCredit += listCourseInfo.getCredit();
+					selectedCourseList.add(element);
+					
+					//課程的選課人數增加
+					if(listCourseInfo.getSelectedPerson().isBlank()) {
+						listCourseInfo.setSelectedPerson(studentInfo.getStudentId());
+						courseInfoDao.save(listCourseInfo);
+					}else {
+						String selectedPersonStr = listCourseInfo.getSelectedPerson();
+						String newSelectedPersonStr = listCourseInfo.getSelectedPerson() + "," + studentInfo.getStudentId();
+						listCourseInfo.setSelectedPerson(newSelectedPersonStr);
+						courseInfoDao.save(listCourseInfo);
+					}
+				}
+				String joinedSelectedCourseList = String.join(",", selectedCourseList);
+				studentInfo.setSelectedCourse(joinedSelectedCourseList);
+				//學生學分增加
+				studentInfo.setAcquiredCredit(studentInfo.getAcquiredCredit() + newCredit);
+				studentInfoDao.save(studentInfo);
+				
+				courseInfoResp.message = "課程加選成功";
+				return courseInfoResp;
+			} else {
+				//學生沒有已選課程
+				
+				//加入學生課程
+				String joinedSelectCourseListReq = String.join(",", selectCourseListReq);
+				studentInfo.setSelectedCourse(joinedSelectCourseListReq);
+				int newCredit = 0;
+				for(String element : selectCourseListReq) {
+					CourseInfo listCourseInfo = courseInfoDao.findCourseInfoByCourseId(element);
+					newCredit += listCourseInfo.getCredit();						
+					//課程的選課人數增加
+					if(listCourseInfo.getSelectedPerson().isBlank()) {
+						listCourseInfo.setSelectedPerson(studentInfo.getStudentId());
+						courseInfoDao.save(listCourseInfo);
+					}else {
+						String selectedPersonStr = listCourseInfo.getSelectedPerson();
+						String newSelectedPersonStr = listCourseInfo.getSelectedPerson() + "," + studentInfo.getStudentId();
+						listCourseInfo.setSelectedPerson(newSelectedPersonStr);
+						courseInfoDao.save(listCourseInfo);
+					}
+				}
+				//學生學分增加
+				studentInfo.setAcquiredCredit(studentInfo.getAcquiredCredit() + newCredit);
+				studentInfoDao.save(studentInfo);
+			}
+			courseInfoResp.message = "課程加選成功";
+			return courseInfoResp;
+			//---------------------------------------多重加選----------------------------------------
+		} else {
+			//---------------------------------------單個加選---------------------------------------
+			CourseInfo courseInfo = courseInfoDao.findCourseInfoByCourseId(courseInfoReq.getCourseId());
+			
+			if(courseInfo == null) {
+				courseInfoResp.message = "該課程代碼不存在";
+				return courseInfoResp;
+			}
+			
+			//欲選課程選修人數上限判斷
+			String courseSeletedPerson = courseInfo.getSelectedPerson();
+			if(!courseSeletedPerson.isBlank()) {
+				String[] courseSeletedPersonArray = courseSeletedPerson.split(",");
+				List<String> courseSeletedPersonList = new ArrayList<>(Arrays.asList(courseSeletedPersonArray));
+				if(courseSeletedPersonList.size() >= courseInfo.getSelectLimit()) {
+					courseInfoResp.message = "該課程的選修人數已達上限 , 無法再加選";
+					return courseInfoResp;
 				}
 			}
 			
-			//加入學生已選課程
-			selectedCourseList.add(courseInfo.getCourseId());
-			String joinedSelectedCourseList = String.join(",", selectedCourseList);
-			studentInfo.setSelectedCourse(joinedSelectedCourseList);
-			//學生學分增加
-			studentInfo.setAcquiredCredit(studentInfo.getAcquiredCredit() + courseInfo.getCredit());
-			//課程的選課人數增加
-			if(courseInfo.getSelectedPerson().isBlank()) {
-				courseInfo.setSelectedPerson(studentInfo.getStudentId());
-				courseInfoDao.save(courseInfo);
-			}else {
-				String selectedPersonStr = courseInfo.getSelectedPerson();
-				String newselectedPersonStr = courseInfo.getSelectedPerson() + "," + studentInfo.getStudentId();
-				courseInfo.setSelectedPerson(newselectedPersonStr);
-				courseInfoDao.save(courseInfo);
+			//學分上限判斷
+			if(studentInfo.getAcquiredCredit() >= 10) {
+				courseInfoResp.message = "你的學分已經滿10分了 , 無法再加選";
+				return courseInfoResp;
 			}
-			studentInfoDao.save(studentInfo);
-			courseInfoResp.message = "課程加選成功";
-			return courseInfoResp;
 			
-		}else{
-			//學生沒有已選課程
-			studentInfo.setSelectedCourse(courseInfo.getCourseId());
-			studentInfo.setAcquiredCredit(studentInfo.getAcquiredCredit() + courseInfo.getCredit());	
-			//加入學生已選課程
-			studentInfo.setSelectedCourse(courseInfo.getCourseId());
-			//學生學分增加
-			studentInfo.setAcquiredCredit(courseInfo.getCredit());
-			//課程的選課人數增加
-			if(courseInfo.getSelectedPerson().isBlank()) {
-				courseInfo.setSelectedPerson(studentInfo.getStudentId());
-				courseInfoDao.save(courseInfo);
-			}else {
-				String selectedPersonStr = courseInfo.getSelectedPerson();
-				String newselectedPersonStr = courseInfo.getSelectedPerson() + "," + studentInfo.getStudentId();
-				courseInfo.setSelectedPerson(newselectedPersonStr);
-				courseInfoDao.save(courseInfo);
+			//學生已選課程判斷
+			if(!selectedCourse.isBlank()) {
+				//學生有已選課程
+				String[] selectedCourseArray = selectedCourse.split(",");
+				List<String> selectedCourseList = new ArrayList<>(Arrays.asList(selectedCourseArray));
+				
+				//重複加選判斷
+				if(selectedCourseList.contains(courseInfoReq.getCourseId())) {
+					courseInfoResp.message = "你已經加選該課程了 , 無法再加選";
+					return courseInfoResp;
+				}
+				
+				//學生選修上限判斷
+				if(selectedCourseList.size() >= 3) {
+					courseInfoResp.message = "你的選修課程數已達上限 , 無法再加選";
+					return courseInfoResp;
+				}
+				
+				//課程同名判斷
+				for(String element : selectedCourseList) {
+					//學生已選課程的Info (new新的Req使用,否則會蓋掉原本輸入的ReqBody)
+					CourseInfoReq selectedCourseInfoReq = new CourseInfoReq();
+					selectedCourseInfoReq.setCourseId(element);
+					CourseInfo selectedCourseInfo = getCourseInfoByCourseId(selectedCourseInfoReq);
+					if(courseInfo.getCourseName().equals(selectedCourseInfo.getCourseName())) {
+						courseInfoResp.message = "你的已選課程中已有 " + courseInfo.getCourseName() + " , 不可再"
+								+ "加選相同名稱的課程" ;
+						return courseInfoResp;
+					}
+					
+					//衝堂判斷
+					//已選課程的上下課時間轉為分鐘數
+					String selectedCourseStartTimeStr = selectedCourseInfo.getStartTime();
+					LocalTime selectedCourseStartTime = LocalTime.parse(selectedCourseStartTimeStr);
+					int selectedCourseStartTimeMinutes = selectedCourseStartTime.getHour() * 60 + 
+							selectedCourseStartTime.getMinute();
+					
+					String selectedCourseEndTimeStr = selectedCourseInfo.getEndTime();
+					LocalTime selectedCourseEndTime = LocalTime.parse(selectedCourseEndTimeStr);
+					int selectedCourseEndTimeMinutes = selectedCourseEndTime.getHour() * 60 + 
+							selectedCourseEndTime.getMinute();
+					
+					//欲選課程的上下課時間轉為分鐘數
+					String selectCourseStartTimeStr = courseInfo.getStartTime();
+					LocalTime selectCourseStartTime = LocalTime.parse(selectCourseStartTimeStr);
+					int selectCourseStartTimeMinutes = selectCourseStartTime.getHour() * 60 + 
+							selectCourseStartTime.getMinute();
+					
+					String selectCourseEndTimeStr = courseInfo.getStartTime();
+					LocalTime selectCourseEndTime = LocalTime.parse(selectCourseEndTimeStr);
+					int selectCourseEndTimeMinutes = selectCourseEndTime.getHour() * 60 + 
+							selectCourseEndTime.getMinute();
+					
+					//同一天才判斷
+					if(courseInfo.getLessonDay().equals(selectedCourseInfo.getLessonDay())){
+						
+						if(selectCourseStartTimeMinutes >= selectedCourseStartTimeMinutes
+							&& selectCourseStartTimeMinutes <= selectedCourseEndTimeMinutes
+							||	selectCourseEndTimeMinutes >= selectedCourseStartTimeMinutes
+							&& selectCourseEndTimeMinutes <= selectedCourseEndTimeMinutes) {
+							courseInfoResp.message = "你的已選課程 " + selectedCourseInfo.getCourseName() + " 與欲選課程 " +
+									courseInfo.getCourseName() + " 時間相衝 , 不可加選";
+							return courseInfoResp;
+						}
+						
+					}
+				}
+				
+				//加入學生已選課程
+				selectedCourseList.add(courseInfo.getCourseId());
+				String joinedSelectedCourseList = String.join(",", selectedCourseList);
+				studentInfo.setSelectedCourse(joinedSelectedCourseList);
+				//學生學分增加
+				studentInfo.setAcquiredCredit(studentInfo.getAcquiredCredit() + courseInfo.getCredit());
+				//課程的選課人數增加
+				if(courseInfo.getSelectedPerson().isBlank()) {
+					courseInfo.setSelectedPerson(studentInfo.getStudentId());
+					courseInfoDao.save(courseInfo);
+				}else {
+					String selectedPersonStr = courseInfo.getSelectedPerson();
+					String newSelectedPersonStr = courseInfo.getSelectedPerson() + "," + studentInfo.getStudentId();
+					courseInfo.setSelectedPerson(newSelectedPersonStr);
+					courseInfoDao.save(courseInfo);
+				}
+				studentInfoDao.save(studentInfo);
+				courseInfoResp.message = "課程加選成功";
+				return courseInfoResp;
+				
+			}else{
+				//學生沒有已選課程
+				studentInfo.setSelectedCourse(courseInfo.getCourseId());
+				studentInfo.setAcquiredCredit(studentInfo.getAcquiredCredit() + courseInfo.getCredit());	
+				//加入學生已選課程
+				studentInfo.setSelectedCourse(courseInfo.getCourseId());
+				//學生學分增加
+				studentInfo.setAcquiredCredit(courseInfo.getCredit());
+				//課程的選課人數增加
+				if(courseInfo.getSelectedPerson().isBlank()) {
+					courseInfo.setSelectedPerson(studentInfo.getStudentId());
+					courseInfoDao.save(courseInfo);
+				}else {
+					String selectedPersonStr = courseInfo.getSelectedPerson();
+					String newSelectedPersonStr = courseInfo.getSelectedPerson() + "," + studentInfo.getStudentId();
+					courseInfo.setSelectedPerson(newSelectedPersonStr);
+					courseInfoDao.save(courseInfo);
+				}
+				studentInfoDao.save(studentInfo);
+				courseInfoResp.message = "課程加選成功";
 			}
-			studentInfoDao.save(studentInfo);
-			courseInfoResp.message = "課程加選成功";
 		}
 		return courseInfoResp;
+		//---------------------------------------單個加選---------------------------------------
 	}
+
+			
 	
 	//-----------------------------------------退選課程----------------------------------------
 	@Override
@@ -447,7 +709,7 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 			
 			selectedPersonList.remove(personCount);
 			String newSelectedPersonList = String.join(",", selectedPersonList);
-			courseInfo.setSelectedPerson(newSelectedPersonList);		
+			courseInfo.setSelectedPerson(newSelectedPersonList);
 			//扣除學生學分
 			studentInfo.setAcquiredCredit(studentInfo.getAcquiredCredit() - courseInfo.getCredit());
 			

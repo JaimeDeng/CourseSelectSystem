@@ -57,8 +57,9 @@ public class StudentInfoServiceImpl implements StudentInfoService {
 						String passwordReqList = element.getPassword();
 						String selectedCourseReqList = element.getSelectedCourse();
 						
-						if(!StringUtils.hasText(studentIdReqList) || studentIdReqList.length() < 3) {
-							studentInfoResp.message = "學號" + studentIdReqList + "不得為空且須大於3個字元";
+						String idPattern = "[a-zA-Z0-9]{4,10}";
+						if(!studentIdReqList.matches(idPattern)) {
+							studentInfoResp.message = "學號" + studentIdReqList + "必須為英數字4~10個字元";
 							return studentInfoResp;
 						}
 						if(!StringUtils.hasText(nameReqList)) {
@@ -92,8 +93,9 @@ public class StudentInfoServiceImpl implements StudentInfoService {
 					String passwordReq = studentInfoReq.getPassword();
 					String selectedCourseReq = studentInfoReq.getSelectedCourse();
 					
-					if(!StringUtils.hasText(studentIdReq) || studentIdReq.length() < 3) {
-						studentInfoResp.message = "學號" + studentIdReq + "不得為空且須大於3個字元";
+					String idPattern = "[a-zA-Z0-9]{4,10}";
+					if(!studentIdReq.matches(idPattern)) {
+						studentInfoResp.message = "學號" + studentIdReq + "必須為英數字4~10個字元";
 						return studentInfoResp;
 					}
 					if(!StringUtils.hasText(nameReq)) {

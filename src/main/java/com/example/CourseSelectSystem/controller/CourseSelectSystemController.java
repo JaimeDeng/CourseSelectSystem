@@ -8,6 +8,8 @@ import com.example.CourseSelectSystem.services.*;
 import com.example.CourseSelectSystem.vo.*;
 
 @RestController
+@CrossOrigin
+@RequestMapping("/api")
 public class CourseSelectSystemController {
 	
 	//-----------------------Constructor Injection---------------------------
@@ -23,6 +25,7 @@ public class CourseSelectSystemController {
 	//-----------------------Constructor Injection---------------------------
 	
 	//---------------------------CourseInfoService---------------------------
+	
 	@PostMapping("/setCourseInfo")
 	public CourseInfoResp setCourseInfo(@RequestBody CourseInfoReq courseInfoReq) {
 		CourseInfoResp courseInfoResp = new CourseInfoResp();
