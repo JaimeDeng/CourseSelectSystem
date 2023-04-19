@@ -39,6 +39,9 @@ courseId(String)
 JSON物件格式填入
 studentId(String)
 courseId(String)
+若欲選多堂課將courseId改為
+selectCourseList(String array)
+以陣列格式輸入課程代碼
 
 "/dropCourse":
 JSON物件格式填入
