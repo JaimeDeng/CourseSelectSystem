@@ -3,7 +3,10 @@ package com.example.CourseSelectSystem.services;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.transaction.Transactional;
 
@@ -67,6 +70,10 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 				String endTimeReqList = element.getEndTime();
 				Integer selectLimitReqList = element.getSelectLimit();
 				
+				if(courseInfoDao.existsByCourseId(courseIdReqList)) {
+						courseInfoResp.message = "該課程ID " + courseIdReqList +  " 已存在,不可新增";
+						return courseInfoResp;
+				}
 				String idPattern = "[a-zA-Z0-9]{4,10}";
 				if(!courseIdReqList.matches(idPattern)) {
 					courseInfoResp.message = "課程代碼" + courseIdReqList + "必須為英數字4~10個字元";
@@ -115,6 +122,11 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 			String selectedPersonReq = courseInfoReq.getSelectedPerson();
 			Integer selectLimitReq = courseInfoReq.getSelectLimit();
 			
+			
+			if(courseInfoDao.existsByCourseId(courseIdReq)) {
+				courseInfoResp.message = "該課程ID " + courseIdReq +  " 已存在,不可新增";
+				return courseInfoResp;
+			}
 			String idPattern = "[a-zA-Z0-9]{4,10}";
 			if(!courseIdReq.matches(idPattern)) {
 				courseInfoResp.message = "課程代碼必須為英數字4~10個字元";
@@ -283,11 +295,6 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 		List<String> selectCourseListReq = courseInfoReq.getSelectCourseList();
 		if(selectCourseListReq.size() != 0) {
 			
-			if(selectCourseListReq.size() > 3) {
-				courseInfoResp.message = "選課上限為三門課程,不可超過選課上限";
-				return courseInfoResp;
-			}
-			
 			//學分上限判斷
 			if(studentInfo.getAcquiredCredit() >= 10) {
 				courseInfoResp.message = "你的學分已經滿10分了 , 無法再加選";
@@ -308,6 +315,21 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 			}
 			
 			//選課List衝堂判斷 & 撞名判斷
+			
+			//設置衝突列表
+			List<String> newSelectCourseListReq = new ArrayList<>();
+			boolean scheduleConflict = false;
+			boolean nameConflict = false;
+			StringBuilder scheduleConflictSb = new StringBuilder();
+			LinkedHashMap<String , Boolean> scheduleConflictMap = new LinkedHashMap<>();
+			StringBuilder nameConflictSb = new StringBuilder();
+			LinkedHashMap<String , Boolean> nameConflictMap = new LinkedHashMap<>();
+			for(String element : selectCourseListReq) {
+				scheduleConflictMap.put(element, false);
+				nameConflictMap.put(element, false);
+			}
+			
+			//判斷區
 			for(int i =0 ; i < selectCourseListReq.size() ; i++) {
 				for(int j =0 ; j < selectCourseListReq.size() ; j++) {
 					if(i != j) {
@@ -316,9 +338,13 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 						
 						//撞名判斷
 						if(courseInfoA.getCourseName().equals(courseInfoB.getCourseName())) {
-							courseInfoResp.message = "你選的課程 " + courseInfoA.getCourseId() + " 與課程 " +
-									courseInfoB.getCourseId() + " 名稱相同 , 不可加選";
-							return courseInfoResp;
+							//撞名的衝突Map值都變成true
+							for (Map.Entry<String , Boolean> entry : nameConflictMap.entrySet()) {
+							    if(entry.getKey().equals(courseInfoA.getCourseId()) || entry.getKey().equals(courseInfoB.getCourseId())) {
+							    	nameConflictMap.put(entry.getKey() , true);
+							    	nameConflict = true;
+							    }
+							}
 						}
 						
 						//衝堂判斷
@@ -351,13 +377,80 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 								&& courseInfoBStartTimeMinutes <= courseInfoAEndTimeMinutes
 								||	courseInfoBEndTimeMinutes >= courseInfoAStartTimeMinutes
 								&& courseInfoBEndTimeMinutes <= courseInfoAEndTimeMinutes) {
-								courseInfoResp.message = "你選的課程 " + courseInfoA.getCourseName() + " 與課程 " +
-										courseInfoB.getCourseName() + " 時間相衝 , 不可加選";
-								return courseInfoResp;
+								//衝堂的衝突Map值都變成true
+								for (Map.Entry<String , Boolean> entry : scheduleConflictMap.entrySet()) {
+								    if(entry.getKey().equals(courseInfoA.getCourseId()) || entry.getKey().equals(courseInfoB.getCourseId())) {
+								    	scheduleConflictMap.put(entry.getKey() , true);
+								    	scheduleConflict = true;
+								    }
+								}
 							}
 						}
 					}
 				}
+			}
+			
+			//Map結算區
+			//撞名結算區
+			//組成message 及 修改選課List讓後續只檢查沒撞名的
+			List<String> nameConflictList = new ArrayList<>();
+			int nameConflictCount = 0;
+			for (Map.Entry<String , Boolean> entry : nameConflictMap.entrySet()) {
+				if(entry.getValue() == true) {
+					nameConflictList.add(entry.getKey());	//撞名就加進撞名List
+				}
+			}
+			for (String element : nameConflictList) {
+				nameConflictCount++;
+				if(nameConflictCount == 1) {
+					nameConflictSb.append("您選的課程 " + element);
+				}
+				if(nameConflictCount > 1 && nameConflictCount < nameConflictList.size()) {
+					nameConflictSb.append(" 與課程 " + element);
+				}
+				if(nameConflictCount == nameConflictList.size()) {
+					nameConflictSb.append(" 與課程 " + element + " 名稱相衝 , 無法加選");
+				}
+			}
+			if(nameConflict == true) {
+				courseInfoResp.nameConflictMessage = nameConflictSb.toString();
+			}
+			//衝堂結算區
+			//組成message 及 修改選課List讓後續只檢查沒衝堂的
+			List<String> scheduleConflictList = new ArrayList<>();
+			int scheduleConflictCount = 0;
+			for (Map.Entry<String , Boolean> entry : scheduleConflictMap.entrySet()) {
+				if(entry.getValue() == true) {
+					scheduleConflictList.add(entry.getKey());	//衝堂就加進衝堂List
+				}
+			}
+			for (String element : scheduleConflictList) {
+				scheduleConflictCount++;
+				if(scheduleConflictCount == 1) {
+					scheduleConflictSb.append("您選的課程 " + element);
+				}
+				if(scheduleConflictCount > 1 && scheduleConflictCount < scheduleConflictList.size()) {
+					scheduleConflictSb.append(" 與課程 " + element);
+				}
+				if(scheduleConflictCount == scheduleConflictList.size()) {
+					scheduleConflictSb.append(" 與課程 " + element + " 衝堂 , 無法加選");
+				}
+			}
+			if(scheduleConflict == true) {
+				courseInfoResp.scheduleConflictMessage = scheduleConflictSb.toString();
+			}
+			if(nameConflict == true || scheduleConflict == true) {
+				for(String element : selectCourseListReq) {
+					if(!nameConflictList.contains(element) && !scheduleConflictList.contains(element)) {
+						newSelectCourseListReq.add(element);
+					}
+				}
+				selectCourseListReq = newSelectCourseListReq;
+			}
+			//如果全部課程都有撞 , 新的List會是0個內容 , 此時直接return , 不做後續檢查
+			if(selectCourseListReq.size() == 0) {
+				courseInfoResp.message = "課程加選失敗";
+				return courseInfoResp;
 			}
 			
 			
@@ -389,12 +482,6 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 					//重複加選判斷
 					if(selectedCourseList.contains(courseInfo.getCourseId())) {
 						courseInfoResp.message = "你已經加選課程 " + courseInfo.getCourseId() + " 了 , 無法再加選";
-						return courseInfoResp;
-					}
-					
-					//學生選修上限判斷
-					if(selectedCourseList.size() >= 3) {
-						courseInfoResp.message = "你的選修課程數已達上限 , 無法再加選";
 						return courseInfoResp;
 					}
 					
@@ -484,9 +571,20 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 				studentInfo.setSelectedCourse(joinedSelectedCourseList);
 				//學生學分增加
 				studentInfo.setAcquiredCredit(studentInfo.getAcquiredCredit() + newCredit);
-				studentInfoDao.save(studentInfo);
 				
-				courseInfoResp.message = "課程加選成功";
+				//加選成功回報
+				studentInfoDao.save(studentInfo);
+				StringBuilder selectSuccessSb = new StringBuilder();
+				int selectCourseListReqCount = 0;
+				for(String element : selectCourseListReq) {
+					selectCourseListReqCount++;
+					if(selectCourseListReqCount < selectCourseListReq.size()) {
+						selectSuccessSb.append(element + " , ");
+					}else {
+						selectSuccessSb.append(element);
+					}
+				}
+				courseInfoResp.message = "課程" + selectSuccessSb.toString() + "加選成功";
 				return courseInfoResp;
 			} else {
 				//學生沒有已選課程
@@ -513,7 +611,19 @@ public class CourseInfoServiceImpl implements CourseInfoService {
 				studentInfo.setAcquiredCredit(studentInfo.getAcquiredCredit() + newCredit);
 				studentInfoDao.save(studentInfo);
 			}
-			courseInfoResp.message = "課程加選成功";
+			
+			//加選成功回報
+			StringBuilder selectSuccessSb = new StringBuilder();
+			int selectCourseListReqCount = 0;
+			for(String element : selectCourseListReq) {
+				selectCourseListReqCount++;
+				if(selectCourseListReqCount < selectCourseListReq.size()) {
+					selectSuccessSb.append(element + " , ");
+				}else {
+					selectSuccessSb.append(element);
+				}
+			}
+			courseInfoResp.message = "課程" + selectSuccessSb.toString() + "加選成功";
 			return courseInfoResp;
 			//---------------------------------------多重加選----------------------------------------
 		} else {

@@ -15,5 +15,7 @@ public interface StudentInfoDao extends JpaRepository<StudentInfo, Integer> {
 	List<StudentInfo> findStudentInfoByName(String name);
 	
 	StudentInfo findStudentInfoByStudentId(String studentId);
+	
+	boolean existsByStudentId(String studentId);
 
 }

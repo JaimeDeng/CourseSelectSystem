@@ -10,5 +10,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class CourseInfoResp extends CourseInfoReq {
 	
 	public String message;
+	
+	public String nameConflictMessage;
+	
+	public String scheduleConflictMessage;
 
 }
