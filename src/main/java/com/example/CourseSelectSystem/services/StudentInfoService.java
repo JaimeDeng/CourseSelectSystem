@@ -13,5 +13,7 @@ public interface StudentInfoService {
 	public StudentInfoResp getStudentInfoByStudentId(StudentInfoReq studentInfoReq);
 	public StudentInfoResp deleteStudentInfo(StudentInfoReq studentInfoReq);
 	public StudentInfoResp getSelectedCourseInfo(StudentInfoReq studentInfoReq);
+	public StudentInfoResp editPassword(StudentInfoReq studentInfoReq);
+	public StudentInfoResp editStudentInfo(StudentInfoReq studentInfoReq);
 	
 }

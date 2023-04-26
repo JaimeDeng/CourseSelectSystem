@@ -118,6 +118,20 @@ public class CourseSelectSystemController {
 		studentInfoResp = studentInfoService.getSelectedCourseInfo(studentInfoReq);
 		return studentInfoResp;
 	}
+	
+	@PostMapping("editPassword")
+	public StudentInfoResp editPassword(@RequestBody StudentInfoReq studentInfoReq) {
+		StudentInfoResp studentInfoResp = new StudentInfoResp();
+		studentInfoResp = studentInfoService.editPassword(studentInfoReq);
+		return studentInfoResp;
+	}
+	
+	@PostMapping("editStudentInfo")
+	public StudentInfoResp editStudentInfo(@RequestBody StudentInfoReq studentInfoReq) {
+		StudentInfoResp studentInfoResp = new StudentInfoResp();
+		studentInfoResp = studentInfoService.editStudentInfo(studentInfoReq);
+		return studentInfoResp;
+	}
 	//---------------------------StudentInfoService--------------------------
 	
 }

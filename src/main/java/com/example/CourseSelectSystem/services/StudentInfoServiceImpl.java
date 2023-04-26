@@ -110,8 +110,8 @@ public class StudentInfoServiceImpl implements StudentInfoService {
 						studentInfoResp.message = "姓名"+ nameReq +"格式錯誤";
 						return studentInfoResp;
 					}
-					if(acquiredCreditReq < 0) {
-						studentInfoResp.message = "學號" + studentIdReq + "的學生學分不可設定為負數";
+					if(acquiredCreditReq == null || acquiredCreditReq < 0) {
+						studentInfoResp.message = "請設定學號" + studentIdReq + "的學生學分取不可設定為負數";
 						return studentInfoResp;
 					}
 					String patternSecurity = "^(?=.*[!*@#$%^&+=])(?=\\S{8,20}$).*";		//密碼必須長度8~20且至少含有一個特殊字符
@@ -204,6 +204,96 @@ public class StudentInfoServiceImpl implements StudentInfoService {
 			studentInfoResp.setStudentId(studentIdReq);
 			studentInfoResp.setName(NameReq);
 			studentInfoResp.message = "學生: " + studentInfo.getStudentId() + " " + studentInfo.getName() + " 的選課資訊查詢成功";
+		}
+		return studentInfoResp;
+	}
+
+	//-----------------------------------------修改密碼----------------------------------------
+	@Override
+	public StudentInfoResp editPassword(StudentInfoReq studentInfoReq) {
+		if(!StringUtils.hasText(studentInfoReq.getStudentId())) {
+			studentInfoResp.message = "學號不可為null";
+			return studentInfoResp;
+		}
+		if(!StringUtils.hasText(studentInfoReq.getPassword())) {
+			studentInfoResp.message = "新密碼不可為null";
+			return studentInfoResp;
+		}
+		if(!studentInfoDao.existsByStudentId(studentInfoReq.getStudentId())) {
+			studentInfoResp.message = "此學號不存在";
+			return studentInfoResp;
+		}
+		StudentInfo studentInfo = studentInfoDao.findStudentInfoByStudentId(studentInfoReq.getStudentId());
+		String oldPwd = studentInfo.getPassword();
+		String newPwd = studentInfoReq.getPassword();
+		if(oldPwd.equals(newPwd)) {
+			studentInfoResp.message = "新密碼不可與舊密碼相同";
+			return studentInfoResp;
+		}
+		String patternSecurity = "^(?=.*[!*@#$%^&+=])(?=\\S{8,20}$).*";		//密碼必須長度8~20且至少含有一個特殊字符
+		if(!newPwd.matches(patternSecurity)) {
+			studentInfoResp.message = "密碼必須長度8~20且至少含有一個特殊字符";
+			return studentInfoResp;
+		}
+		studentInfo.setPassword(newPwd);
+		studentInfoDao.save(studentInfo);
+		studentInfoResp.message = "密碼修改成功";
+		return studentInfoResp;
+	}
+
+	//-----------------------------------------修改學生資訊----------------------------------------
+	@Override
+	public StudentInfoResp editStudentInfo(StudentInfoReq studentInfoReq) {
+
+		String studentIdReq = studentInfoReq.getStudentId();
+		String nameReq = studentInfoReq.getName();
+		Integer acquiredCreditReq = studentInfoReq.getAcquiredCredit();
+		String passwordReq = studentInfoReq.getPassword();
+		String selectedCourseReq = studentInfoReq.getSelectedCourse();
+		String newStudentId = studentInfoReq.getNewStudentId();
+		
+		if(!studentInfoDao.existsByStudentId(studentIdReq)) {
+			studentInfoResp.message = "查無此學號資訊";
+			return studentInfoResp;
+		}
+		StudentInfo studentInfo = studentInfoDao.findStudentInfoByStudentId(studentIdReq);
+		StudentInfo newStudentInfo = new StudentInfo();
+		
+		String idPattern = "[a-zA-Z0-9]{4,10}";
+		if(!newStudentId.matches(idPattern)) {
+			studentInfoResp.message = "學號必須為英數字4~10個字元";
+			return studentInfoResp;
+		}
+		newStudentInfo.setStudentId(newStudentId);
+		if(!StringUtils.hasText(nameReq)) {
+			studentInfoResp.message = "姓名"+ nameReq +"格式錯誤";
+			return studentInfoResp;
+		}
+		newStudentInfo.setName(nameReq);
+		if(acquiredCreditReq == null || acquiredCreditReq < 0) {
+			studentInfoResp.message = "請設定學分且不可設定為負數";
+			return studentInfoResp;
+		}
+		newStudentInfo.setAcquiredCredit(acquiredCreditReq);
+		String patternSecurity = "^(?=.*[!*@#$%^&+=])(?=\\S{8,20}$).*";		//密碼必須長度8~20且至少含有一個特殊字符
+		if(!passwordReq.matches(patternSecurity)) {
+			studentInfoResp.message = "密碼必須長度8~20且至少含有一個特殊字符";
+			return studentInfoResp;
+		}
+		newStudentInfo.setPassword(passwordReq);
+		if(StringUtils.hasText(selectedCourseReq)) {
+			studentInfoResp.message = "課程代碼" + studentIdReq + "的已選課程預設為空白 , "
+					+ "請透過課程加選系統加選";
+			return studentInfoResp;
+		}
+		if(newStudentId.equals(studentIdReq)) {
+			studentInfoDao.save(newStudentInfo);
+			studentInfoResp.message = "學生資訊儲存成功";
+			return studentInfoResp;
+		}else {
+			studentInfoDao.save(newStudentInfo);
+			studentInfoDao.delete(studentInfo);
+			studentInfoResp.message = "學生資訊儲存成功";
 		}
 		return studentInfoResp;
 	}
