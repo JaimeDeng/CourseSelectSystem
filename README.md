@@ -68,6 +68,14 @@ studentId(String)
 JSON物件格式填入
 studentId(String)
 
-"getSelectedCourseInfo":
+"/getSelectedCourseInfo":
 JSON物件格式填入
 studentId(String)
+
+"/editStudentInfo":
+JSON物件格式填入
+studentId(String) . newStudentId(String) . name(String) . acquiredCredit(int) . password(String)
+
+"/editPassword":
+JSON物件格式填入
+studentId(String) . newPassword(String)
