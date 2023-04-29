@@ -55,7 +55,7 @@ JSON陣列格式填入 (設定多個)
 陣列名稱studentInfoList
 陣列內容為物件如下方單個的方法填入
 JSON物件格式填入
-studentId(String) . name(String) . selectedCourse(String) . acquiredCredit(int) . password(String)
+studentId(String) . name(String) . selectedCourse(String) . acquiredCredit(int) . password(String) . administrator(boolean)
 
 "/getAllStudentInfo":
 無須send Req
@@ -74,7 +74,7 @@ studentId(String)
 
 "/editStudentInfo":
 JSON物件格式填入
-studentId(String) . newStudentId(String) . name(String) . acquiredCredit(int) . password(String)
+studentId(String) . newStudentId(String) . name(String) . acquiredCredit(int) . password(String) . administrator(boolean)
 
 "/editPassword":
 JSON物件格式填入
