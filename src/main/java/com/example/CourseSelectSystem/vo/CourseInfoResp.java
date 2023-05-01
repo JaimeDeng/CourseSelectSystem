@@ -14,5 +14,7 @@ public class CourseInfoResp extends CourseInfoReq {
 	public String nameConflictMessage;
 	
 	public String scheduleConflictMessage;
+	
+	public boolean success = false;
 
 }

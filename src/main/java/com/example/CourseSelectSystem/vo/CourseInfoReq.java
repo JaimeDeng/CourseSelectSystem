@@ -11,9 +11,18 @@ public class CourseInfoReq extends CourseInfo {
 	
 	private List<String> selectCourseList = new ArrayList<String>();
 	
+	private String newCourseId;
+	
 	private String studentId;
 
 	//Getter & Setter
+	public String getNewCourseId() {
+		return newCourseId;
+	}
+
+	public void setNewCourseId(String newCourseId) {
+		this.newCourseId = newCourseId;
+	}
 	
 	public List<String> getSelectCourseList() {
 		return selectCourseList;

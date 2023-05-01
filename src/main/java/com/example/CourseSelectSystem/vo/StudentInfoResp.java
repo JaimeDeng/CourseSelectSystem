@@ -10,7 +10,9 @@ public class StudentInfoResp extends StudentInfoReq {
 	
 	public String message;
 	
-private List<CourseInfo> courseInfoList = new ArrayList<CourseInfo>();
+	public boolean success = false;
+	
+	private List<CourseInfo> courseInfoList = new ArrayList<CourseInfo>();
 	
 	//Getter & Setter
 	public List<CourseInfo> getCourseInfoList() {

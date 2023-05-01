@@ -37,6 +37,7 @@ public class CourseSelectSystemController {
 	public CourseInfoResp getAllCourseInfo() {
 		CourseInfoResp courseInfoResp = new CourseInfoResp();
 		courseInfoResp.setCourseInfoList(courseInfoService.getAllCourseInfo());
+		courseInfoResp.success = true;
 		return courseInfoResp;
 	}
 	
@@ -95,6 +96,7 @@ public class CourseSelectSystemController {
 	public StudentInfoResp getAllStudentInfo() {
 		StudentInfoResp studentInfoResp = new StudentInfoResp();
 		studentInfoResp.setStudentInfoList(studentInfoService.getAllStudentInfo());
+		studentInfoResp.success = true;
 		return studentInfoResp;
 	}
 	

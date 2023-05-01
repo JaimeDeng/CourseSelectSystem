@@ -59,35 +59,48 @@ public class StudentInfoServiceImpl implements StudentInfoService {
 						
 						if(studentInfoDao.existsByStudentId(studentIdReqList)) {
 							studentInfoResp.message = "該學號 " + studentIdReqList +  " 已存在,不可新增";
+							studentInfoResp.success = false;
 							return studentInfoResp;
 						}
 						String idPattern = "[a-zA-Z0-9]{4,10}";
 						if(!studentIdReqList.matches(idPattern)) {
 							studentInfoResp.message = "學號" + studentIdReqList + "必須為英數字4~10個字元";
+							studentInfoResp.success = false;
 							return studentInfoResp;
 						}
 						if(!StringUtils.hasText(nameReqList)) {
 							studentInfoResp.message = "姓名"+ nameReqList +"格式錯誤";
+							studentInfoResp.success = false;
 							return studentInfoResp;
 						}
 						if(acquiredCreditReqList < 0) {
 							studentInfoResp.message = "學號" + studentIdReqList + "的學生學分不可設定為負數";
+							studentInfoResp.success = false;
 							return studentInfoResp;
 						}
 						String patternSecurity = "^(?=.*[!*@#$%^&+=])(?=\\S{8,20}$).*";		//密碼必須長度8~20且至少含有一個特殊字符
 						if(!passwordReqList.matches(patternSecurity)) {
 							studentInfoResp.message = "學號" + studentIdReqList + "的密碼格式錯誤 , "
 									+ "密碼必須長度8~20且至少含有一個特殊字符";
+							studentInfoResp.success = false;
 							return studentInfoResp;
 						}
 						if(StringUtils.hasText(selectedCourseReqList)) {
 							studentInfoResp.message = "課程代碼" + studentIdReqList + "的已選課程預設為空白 , "
 									+ "請透過課程加選系統加選";
+							studentInfoResp.success = false;
+							return studentInfoResp;
+						}
+						if(StringUtils.hasText(selectedCourseReqList)) {
+							studentInfoResp.message = "課程代碼" + studentIdReqList + "的已選課程預設為空白 , "
+									+ "請透過課程加選系統加選";
+							studentInfoResp.success = false;
 							return studentInfoResp;
 						}
 					}
 					studentInfoDao.saveAll(studentInfoListReq);
 					studentInfoResp.message = "學生資訊儲存成功";
+					studentInfoResp.success = true;
 					return studentInfoResp;
 				}else {
 					//單個set區塊
@@ -96,39 +109,52 @@ public class StudentInfoServiceImpl implements StudentInfoService {
 					Integer acquiredCreditReq = studentInfoReq.getAcquiredCredit();
 					String passwordReq = studentInfoReq.getPassword();
 					String selectedCourseReq = studentInfoReq.getSelectedCourse();
+					Boolean administratorRqe = studentInfoReq.isAdministrator();
 					
 					if(studentInfoDao.existsByStudentId(studentIdReq)) {
 						studentInfoResp.message = "該學號 " + studentIdReq +  " 已存在,不可新增";
+						studentInfoResp.success = false;
 						return studentInfoResp;
 					}
 					String idPattern = "[a-zA-Z0-9]{4,10}";
 					if(!studentIdReq.matches(idPattern)) {
 						studentInfoResp.message = "學號" + studentIdReq + "必須為英數字4~10個字元";
+						studentInfoResp.success = false;
 						return studentInfoResp;
 					}
 					if(!StringUtils.hasText(nameReq)) {
 						studentInfoResp.message = "姓名"+ nameReq +"格式錯誤";
+						studentInfoResp.success = false;
 						return studentInfoResp;
 					}
 					if(acquiredCreditReq == null || acquiredCreditReq < 0) {
 						studentInfoResp.message = "請設定學號" + studentIdReq + "的學生學分取不可設定為負數";
+						studentInfoResp.success = false;
 						return studentInfoResp;
 					}
 					String patternSecurity = "^(?=.*[!*@#$%^&+=])(?=\\S{8,20}$).*";		//密碼必須長度8~20且至少含有一個特殊字符
 					if(!passwordReq.matches(patternSecurity)) {
 						studentInfoResp.message = "學號" + studentIdReq + "的密碼格式錯誤 , "
 								+ "密碼必須長度8~20且至少含有一個特殊字符";
+						studentInfoResp.success = false;
 						return studentInfoResp;
 					}
 					if(StringUtils.hasText(selectedCourseReq)) {
 						studentInfoResp.message = "課程代碼" + studentIdReq + "的已選課程預設為空白 , "
 								+ "請透過課程加選系統加選";
+						studentInfoResp.success = false;
+						return studentInfoResp;
+					}
+					if(administratorRqe == null) {
+						studentInfoResp.message = "請選擇是否為職員";
+						studentInfoResp.success = false;
 						return studentInfoResp;
 					}
 					StudentInfo studentInfo = new StudentInfo();
 					studentInfo.setStudentInfo(studentInfoReq);
 					studentInfoDao.save(studentInfo);
 					studentInfoResp.message = "學生資訊儲存成功";
+					studentInfoResp.success = true;
 				}
 				return studentInfoResp;
 	}
@@ -147,9 +173,11 @@ public class StudentInfoServiceImpl implements StudentInfoService {
 		studentInfo = studentInfoDao.findStudentInfoByStudentId(studentInfoReq.getStudentId());
 		if(studentInfo == null) {
 			studentInfoResp.message = "查無此學號";
+			studentInfoResp.success = false;
 		}else {
 			studentInfoResp.setStudentInfo(studentInfo);
 			studentInfoResp.message = "成功查詢到此學號學生資訊";
+			studentInfoResp.success = true;
 		}
 		return studentInfoResp;
 	}
@@ -164,14 +192,17 @@ public class StudentInfoServiceImpl implements StudentInfoService {
 		
 		if(studentInfo == null) {
 			studentInfoResp.message = "查無此學號存在";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}
 		if(StringUtils.hasText(studentInfo.getSelectedCourse())) {
 			studentInfoResp.message = "該學生尚有選課 , 無法刪除 , 請先退選所有課程";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}else {
 			studentInfoDao.delete(studentInfo);
 			studentInfoResp.message = "學生資訊: " + studentInfo.getStudentId() + " " + studentInfo.getName() + " 已成功刪除";
+			studentInfoResp.success = true;
 		}
 		return studentInfoResp;
 	}
@@ -188,10 +219,12 @@ public class StudentInfoServiceImpl implements StudentInfoService {
 		
 		if(studentInfo == null) {
 			studentInfoResp.message = "查無此學號存在";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}
 		if(!StringUtils.hasText(studentInfo.getSelectedCourse())) {
 			studentInfoResp.message = "該學生尚無選課";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}else {
 			String selectedCourse = studentInfo.getSelectedCourse();
@@ -204,6 +237,7 @@ public class StudentInfoServiceImpl implements StudentInfoService {
 			studentInfoResp.setStudentId(studentIdReq);
 			studentInfoResp.setName(NameReq);
 			studentInfoResp.message = "學生: " + studentInfo.getStudentId() + " " + studentInfo.getName() + " 的選課資訊查詢成功";
+			studentInfoResp.success = true;
 		}
 		return studentInfoResp;
 	}
@@ -213,14 +247,17 @@ public class StudentInfoServiceImpl implements StudentInfoService {
 	public StudentInfoResp editPassword(StudentInfoReq studentInfoReq) {
 		if(!StringUtils.hasText(studentInfoReq.getStudentId())) {
 			studentInfoResp.message = "學號不可為null";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}
 		if(!StringUtils.hasText(studentInfoReq.getPassword())) {
 			studentInfoResp.message = "新密碼不可為null";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}
 		if(!studentInfoDao.existsByStudentId(studentInfoReq.getStudentId())) {
 			studentInfoResp.message = "此學號不存在";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}
 		StudentInfo studentInfo = studentInfoDao.findStudentInfoByStudentId(studentInfoReq.getStudentId());
@@ -228,16 +265,19 @@ public class StudentInfoServiceImpl implements StudentInfoService {
 		String newPwd = studentInfoReq.getPassword();
 		if(oldPwd.equals(newPwd)) {
 			studentInfoResp.message = "新密碼不可與舊密碼相同";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}
 		String patternSecurity = "^(?=.*[!*@#$%^&+=])(?=\\S{8,20}$).*";		//密碼必須長度8~20且至少含有一個特殊字符
 		if(!newPwd.matches(patternSecurity)) {
 			studentInfoResp.message = "密碼必須長度8~20且至少含有一個特殊字符";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}
 		studentInfo.setPassword(newPwd);
 		studentInfoDao.save(studentInfo);
 		studentInfoResp.message = "密碼修改成功";
+		studentInfoResp.success = true;
 		return studentInfoResp;
 	}
 
@@ -251,9 +291,11 @@ public class StudentInfoServiceImpl implements StudentInfoService {
 		String passwordReq = studentInfoReq.getPassword();
 		String selectedCourseReq = studentInfoReq.getSelectedCourse();
 		String newStudentId = studentInfoReq.getNewStudentId();
+		Boolean addministratorReq = studentInfoReq.isAdministrator();
 		
 		if(!studentInfoDao.existsByStudentId(studentIdReq)) {
 			studentInfoResp.message = "查無此學號資訊";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}
 		StudentInfo studentInfo = studentInfoDao.findStudentInfoByStudentId(studentIdReq);
@@ -262,38 +304,56 @@ public class StudentInfoServiceImpl implements StudentInfoService {
 		String idPattern = "[a-zA-Z0-9]{4,10}";
 		if(!newStudentId.matches(idPattern)) {
 			studentInfoResp.message = "學號必須為英數字4~10個字元";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}
 		newStudentInfo.setStudentId(newStudentId);
 		if(!StringUtils.hasText(nameReq)) {
 			studentInfoResp.message = "姓名"+ nameReq +"格式錯誤";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}
 		newStudentInfo.setName(nameReq);
 		if(acquiredCreditReq == null || acquiredCreditReq < 0) {
 			studentInfoResp.message = "請設定學分且不可設定為負數";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}
 		newStudentInfo.setAcquiredCredit(acquiredCreditReq);
 		String patternSecurity = "^(?=.*[!*@#$%^&+=])(?=\\S{8,20}$).*";		//密碼必須長度8~20且至少含有一個特殊字符
 		if(!passwordReq.matches(patternSecurity)) {
 			studentInfoResp.message = "密碼必須長度8~20且至少含有一個特殊字符";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}
 		newStudentInfo.setPassword(passwordReq);
 		if(StringUtils.hasText(selectedCourseReq)) {
 			studentInfoResp.message = "課程代碼" + studentIdReq + "的已選課程預設為空白 , "
 					+ "請透過課程加選系統加選";
+			studentInfoResp.success = false;
 			return studentInfoResp;
 		}
+		if(addministratorReq == null) {
+			studentInfoResp.message = "職員權限不得為null";
+			studentInfoResp.success = false;
+			return studentInfoResp;
+		}
+		newStudentInfo.setAdministrator(addministratorReq);
 		if(newStudentId.equals(studentIdReq)) {
 			studentInfoDao.save(newStudentInfo);
 			studentInfoResp.message = "學生資訊儲存成功";
+			studentInfoResp.success = true;
 			return studentInfoResp;
 		}else {
+			if(studentInfoDao.existsByStudentId(newStudentId)) {
+				studentInfoResp.message = "您設定的學號已有學生使用,不可修改為該學號";
+				studentInfoResp.success = false;
+				return studentInfoResp;
+			}
 			studentInfoDao.save(newStudentInfo);
 			studentInfoDao.delete(studentInfo);
 			studentInfoResp.message = "學生資訊儲存成功";
+			studentInfoResp.success = true;
 		}
 		return studentInfoResp;
 	}

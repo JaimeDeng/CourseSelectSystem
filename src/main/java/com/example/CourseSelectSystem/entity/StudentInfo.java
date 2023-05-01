@@ -24,7 +24,9 @@ public class StudentInfo {
 	
 	@Column(name = "selected_course")
 	private String selectedCourse = "";
-
+	
+	@Column(name = "administrator")
+	private Boolean administrator;
 	
 	//Getter & Setter
 	public String getStudentId() {
@@ -67,12 +69,21 @@ public class StudentInfo {
 		this.selectedCourse = selectedCourse;
 	}
 	
+	public Boolean isAdministrator() {
+		return administrator;
+	}
+
+	public void setAdministrator(Boolean administrator) {
+		this.administrator = administrator;
+	}
+
 	public void setStudentInfo(StudentInfo studentInfo) {
 		this.studentId = studentInfo.getStudentId();
 		this.name = studentInfo.getName();
 		this.password = studentInfo.getPassword();
 		this.acquiredCredit = studentInfo.getAcquiredCredit();
 		this.selectedCourse =studentInfo.getSelectedCourse();
+		this.administrator = studentInfo.isAdministrator();
 	}
 	
 	//Constructor
